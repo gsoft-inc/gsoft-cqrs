@@ -1,0 +1,41 @@
+<Project>
+	<PropertyGroup>
+		<Copyright>Copyright © 2022 GSoft</Copyright>
+		<Authors>GSoft</Authors>
+		<Product>GSoft Cqrs</Product>
+		<SatelliteResourceLanguages>en-US</SatelliteResourceLanguages>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<LangVersion>10</LangVersion>
+	</PropertyGroup>
+	<ItemGroup Condition="$(MSBuildProjectName.Contains('Tests'))">
+		<PackageReference Include="FakeItEasy.Analyzer.CSharp" Version="6.1.0">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="AsyncFixer" Version="1.5.1">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
+		</PackageReference>
+		<PackageReference Include="StyleCop.Analyzers" Version="1.2.0-beta.406">
+			<PrivateAssets>all</PrivateAssets>
+			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
+	</ItemGroup>
+	<ItemGroup>
+		<Using Include="System" />
+		<Using Include="System.Collections.Generic" />
+		<Using Include="System.Linq" />
+		<Using Include="System.Threading" />
+		<Using Include="System.Threading.Tasks" />
+	</ItemGroup>
+	<PropertyGroup>
+		<EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+	</PropertyGroup>
+	<PropertyGroup>
+		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+	</PropertyGroup>
+</Project>
