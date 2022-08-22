@@ -68,6 +68,18 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     }
 
     [Fact]
+    public async Task AddHandler_Query_Can_Have_Parameters_Injected()
+    {
+        this.Services.AddHandler<QueryHandlerWithInjection>(p => ActivatorUtilities.CreateInstance<QueryHandlerWithInjection>(p, "Test"));
+        var mediator = this.GetMediator();
+        var query = new QueryRecordTwo("Result");
+
+        var regRes = await mediator.HandleAsync(query);
+
+        Assert.Equal("TestResult", regRes);
+    }
+
+    [Fact]
     public async Task AddHandler_Can_Register_Command_Handlers_And_Query_Handlers()
     {
         this.Services.AddHandler<QueryHandler>();
@@ -104,6 +116,8 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     }
 
     private record QueryRecordOne(string Result) : IQuery<string>;
+
+    private record QueryRecordTwo(string Result) : IQuery<string>;
 
     private record StreamOne(string Result) : IStreamQuery<char>;
 
@@ -155,6 +169,21 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         public Task<string> HandleAsync(QueryClassOne query, CancellationToken cancellationToken)
         {
             return Task.FromResult(query.Result);
+        }
+    }
+
+    private class QueryHandlerWithInjection : IQueryHandler<QueryRecordTwo, string>
+    {
+        public QueryHandlerWithInjection(string injectedString)
+        {
+            this.InjectedString = injectedString;
+        }
+
+        public string InjectedString { get; set; }
+
+        public Task<string> HandleAsync(QueryRecordTwo query, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(this.InjectedString + query.Result);
         }
     }
 
