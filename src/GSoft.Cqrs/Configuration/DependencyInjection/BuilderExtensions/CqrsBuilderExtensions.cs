@@ -16,10 +16,10 @@ public static class CqrsBuilderExtensions
     public static void AddHandler<THandler>(this IServiceCollection services, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         where THandler : IHandler
     {
-        services.AddHandler(typeof(THandler), serviceLifetime: serviceLifetime);
+        services.AddHandler(typeof(THandler), (Func<IServiceProvider, THandler>)null!, serviceLifetime: serviceLifetime);
     }
 
-    public static void AddHandler<THandler>(this IServiceCollection services, Func<IServiceProvider, object> implementationFactory, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public static void AddHandler<THandler>(this IServiceCollection services, Func<IServiceProvider, THandler> implementationFactory, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         where THandler : IHandler
     {
         services.AddHandler(typeof(THandler), implementationFactory, serviceLifetime);
@@ -32,28 +32,28 @@ public static class CqrsBuilderExtensions
         services.AddHandler<THandler, TEvent>(p => ActivatorUtilities.CreateInstance<THandler>(p), serviceLifetime);
     }
 
-    public static void AddHandler<THandler, TEvent>(this IServiceCollection services, Func<IServiceProvider, object> implementationFactory, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public static void AddHandler<THandler, TEvent>(this IServiceCollection services, Func<IServiceProvider, THandler> implementationFactory, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
         where THandler : IEventHandler<TEvent>
         where TEvent : IEvent
     {
-        AddHandler<THandler>(services, implementationFactory);
+        AddHandler(services, implementationFactory);
         switch (serviceLifetime)
         {
             case ServiceLifetime.Singleton:
-                services.AddSingleton(typeof(IEventHandler<TEvent>), implementationFactory);
+                services.AddSingleton(typeof(IEventHandler<TEvent>), (implementationFactory as Func<IServiceProvider, object>)!);
                 break;
             case ServiceLifetime.Scoped:
-                services.AddScoped(typeof(IEventHandler<TEvent>), implementationFactory);
+                services.AddScoped(typeof(IEventHandler<TEvent>), (implementationFactory as Func<IServiceProvider, object>)!);
                 break;
             case ServiceLifetime.Transient:
-                services.AddTransient(typeof(IEventHandler<TEvent>), implementationFactory);
+                services.AddTransient(typeof(IEventHandler<TEvent>), (implementationFactory as Func<IServiceProvider, object>)!);
                 break;
             default:
                 throw new ArgumentOutOfRangeException(nameof(serviceLifetime), serviceLifetime, null);
         }
     }
 
-    public static void AddHandler(this IServiceCollection services, Type handlerType, Func<IServiceProvider, object>? implementationFactory = null, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    public static void AddHandler<THandler>(this IServiceCollection services, Type handlerType, Func<IServiceProvider, THandler>? implementationFactory = null, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
     {
         foreach (var @interface in handlerType.GetInterfaces().Where(x => x.IsGenericType))
         {
@@ -66,7 +66,7 @@ public static class CqrsBuilderExtensions
 
         if (implementationFactory != null)
         {
-            services.Add(new ServiceDescriptor(handlerType, implementationFactory, serviceLifetime));
+            services.Add(new ServiceDescriptor(handlerType, (implementationFactory as Func<IServiceProvider, object>)!, serviceLifetime));
         }
         else
         {
