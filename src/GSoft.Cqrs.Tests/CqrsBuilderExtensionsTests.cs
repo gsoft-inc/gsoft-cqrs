@@ -1,4 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using FakeItEasy;
+using GSoft.Cqrs.Abstractions.Events;
 using Microsoft.Extensions.DependencyInjection;
+using FluentAssertions;
 
 using Xunit;
 
@@ -99,6 +104,42 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         Assert.Equal("res1", res1);
         Assert.Equal("res2", res2);
         Assert.Equal("rabbles", res3);
+    }
+
+    [SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1201:ElementsMustAppearInTheCorrectOrder", Justification = "Getting this close to its usage.")]
+    private readonly Type[] listOfHandlers = new[]
+    {
+        typeof(QueryHandler),
+        typeof(QueryHandlerTwo),
+        typeof(QueryHandlerWithInjection),
+        typeof(SomeCommandHandler),
+        typeof(SpyHandler),
+        typeof(StreamHandlerTwo),
+    };
+
+    [Fact]
+    public void AddHandlers_Can_Register_Types_From_Assembly()
+    {
+        this.Services.AddHandlers(this.GetType().Assembly);
+
+        this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers);
+    }
+
+    [Fact]
+    public void AddHandlers_Can_Register_Filtered_List_Of_Types_From_Assembly()
+    {
+        this.Services.AddHandlers(t => t.Name.StartsWith("Query"), this.GetType().Assembly);
+
+        this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers.Where(t => t.Name.StartsWith("Query")));
+        this.Services.Select(s => s.ImplementationType).Should().NotContain(this.listOfHandlers.Where(t => !t.Name.StartsWith("Query")));
+    }
+
+    [Fact]
+    public void AddMediator_Can_Register_Types_From_Assembly()
+    {
+        this.Services.AddMediator(this.GetType().Assembly);
+
+        this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers);
     }
 
     private record struct QueryRecordStructOne(string Result) : IQuery<string>;

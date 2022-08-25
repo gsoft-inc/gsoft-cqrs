@@ -1,3 +1,4 @@
+using System.Reflection;
 using GSoft.Cqrs;
 using GSoft.Cqrs.Abstractions.Events;
 using GSoft.Cqrs.Handlers;
@@ -11,6 +12,45 @@ public static class CqrsBuilderExtensions
     {
         services.AddTransient<IMediator, Mediator>();
         services.AddSingleton<RegistrationCollection>();
+    }
+
+    public static void AddMediator(this IServiceCollection services, params Assembly[] assemblyToScan)
+    {
+        services.AddMediator();
+        services.AddHandlers(assemblyToScan);
+    }
+
+    public static IServiceCollection AddHandlers(this IServiceCollection services, params Assembly[] assembliesToScan)
+    {
+        return services.AddHandlers(t => true, assembliesToScan);
+    }
+
+    public static IServiceCollection AddHandlers(this IServiceCollection services, Func<Type, bool> typeFilter, params Assembly[] assembliesToScan)
+    {
+        var supportedHandlers = new[]
+        {
+            typeof(IQueryHandler<,>),
+            typeof(IStreamHandler<,>),
+            typeof(ICommandHandler<,>),
+            typeof(ICommandHandler<>),
+            typeof(IEventHandler<>),
+        };
+
+        var typesToRegister =
+            from assembly in assembliesToScan
+            from type in assembly.GetTypes()
+            where typeFilter(type)
+            where type.GetInterfaces().Any(i => i.IsGenericType && supportedHandlers.Contains(i.GetGenericTypeDefinition()))
+            select type;
+
+        typesToRegister.Distinct().ToList().ForEach(s => services.AddHandler(s));
+
+        return services;
+    }
+
+    public static void AddHandler(this IServiceCollection services, Type handlerType, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
+    {
+        services.AddHandler(handlerType, (Func<IServiceProvider, object>)null!, serviceLifetime: serviceLifetime);
     }
 
     public static void AddHandler<THandler>(this IServiceCollection services, ServiceLifetime serviceLifetime = ServiceLifetime.Transient)
