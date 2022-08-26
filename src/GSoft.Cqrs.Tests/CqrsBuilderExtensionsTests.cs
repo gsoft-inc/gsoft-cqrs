@@ -11,6 +11,16 @@ namespace GSoft.Cqrs.Tests;
 
 public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
 {
+    private readonly Type[] listOfHandlers = new[]
+    {
+        typeof(QueryHandler),
+        typeof(QueryHandlerTwo),
+        typeof(QueryHandlerWithInjection),
+        typeof(SomeCommandHandler),
+        typeof(SpyHandler),
+        typeof(StreamHandlerTwo),
+    };
+
     public CqrsBuilderExtensionsTests()
     {
         this.Services.AddMediator();
@@ -109,16 +119,6 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         Assert.Equal("rabbles", res3);
     }
 
-    [SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1201:ElementsMustAppearInTheCorrectOrder", Justification = "Getting this close to its usage.")]
-    private readonly Type[] listOfHandlers = new[]
-    {
-        typeof(QueryHandler),
-        typeof(QueryHandlerTwo),
-        typeof(QueryHandlerWithInjection),
-        typeof(SomeCommandHandler),
-        typeof(SpyHandler),
-        typeof(StreamHandlerTwo),
-    };
 
     [Fact]
     public void AddHandlers_Can_Register_Types_From_Assembly()
