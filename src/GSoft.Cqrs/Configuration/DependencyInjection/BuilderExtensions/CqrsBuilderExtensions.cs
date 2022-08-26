@@ -14,10 +14,10 @@ public static class CqrsBuilderExtensions
         services.AddSingleton<RegistrationCollection>();
     }
 
-    public static void AddMediator(this IServiceCollection services, params Assembly[] assemblyToScan)
+    public static void AddMediator(this IServiceCollection services, params Assembly[] assembliesToScan)
     {
         services.AddMediator();
-        services.AddHandlers(assemblyToScan);
+        services.AddHandlers(assembliesToScan);
     }
 
     public static IServiceCollection AddHandlers(this IServiceCollection services, params Assembly[] assembliesToScan)
