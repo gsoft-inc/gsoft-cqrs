@@ -37,8 +37,9 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public void AddHandler_Multiple_Query_Registration_Throws_The_List_Of_Duplicated_Queries()
     {
-        this.Services.AddHandler<QueryHandler>();
-        this.Services.AddHandler<QueryHandlerTwo>();
+        this.Services
+            .AddHandler<QueryHandler>()
+            .AddHandler<QueryHandlerTwo>();
 
         var exception = Assert.Throws<ArgumentException>(this.GetMediator);
 
@@ -49,8 +50,9 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public void AddHandler_Multiple_Query_Registration_Throws_The_List_Of_Duplicated_Streams()
     {
-        this.Services.AddHandler<QueryHandler>();
-        this.Services.AddHandler<StreamHandlerTwo>();
+        this.Services
+            .AddHandler<QueryHandler>()
+            .AddHandler<StreamHandlerTwo>();
 
         var exception = Assert.Throws<ArgumentException>(this.GetMediator);
 
@@ -87,8 +89,9 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public async Task AddHandler_Can_Register_Command_Handlers_And_Query_Handlers()
     {
-        this.Services.AddHandler<QueryHandler>();
-        this.Services.AddHandler<SomeCommandHandler>();
+        this.Services
+            .AddHandler<QueryHandler>()
+            .AddHandler<SomeCommandHandler>();
 
         var mediator = this.GetMediator();
         var query1 = new QueryClassOne("res1");
