@@ -1,4 +1,9 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using FakeItEasy;
+using GSoft.Cqrs.Abstractions.Events;
 using Microsoft.Extensions.DependencyInjection;
+using FluentAssertions;
 
 using Xunit;
 
@@ -6,6 +11,16 @@ namespace GSoft.Cqrs.Tests;
 
 public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
 {
+    private readonly Type[] listOfHandlers = new[]
+    {
+        typeof(QueryHandler),
+        typeof(QueryHandlerTwo),
+        typeof(QueryHandlerWithInjection),
+        typeof(SomeCommandHandler),
+        typeof(SpyHandler),
+        typeof(StreamHandlerTwo),
+    };
+
     public CqrsBuilderExtensionsTests()
     {
         this.Services.AddMediator();
@@ -32,8 +47,9 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public void AddHandler_Multiple_Query_Registration_Throws_The_List_Of_Duplicated_Queries()
     {
-        this.Services.AddHandler<QueryHandler>();
-        this.Services.AddHandler<QueryHandlerTwo>();
+        this.Services
+            .AddHandler<QueryHandler>()
+            .AddHandler<QueryHandlerTwo>();
 
         var exception = Assert.Throws<ArgumentException>(this.GetMediator);
 
@@ -44,8 +60,9 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public void AddHandler_Multiple_Query_Registration_Throws_The_List_Of_Duplicated_Streams()
     {
-        this.Services.AddHandler<QueryHandler>();
-        this.Services.AddHandler<StreamHandlerTwo>();
+        this.Services
+            .AddHandler<QueryHandler>()
+            .AddHandler<StreamHandlerTwo>();
 
         var exception = Assert.Throws<ArgumentException>(this.GetMediator);
 
@@ -82,8 +99,9 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public async Task AddHandler_Can_Register_Command_Handlers_And_Query_Handlers()
     {
-        this.Services.AddHandler<QueryHandler>();
-        this.Services.AddHandler<SomeCommandHandler>();
+        this.Services
+            .AddHandler<QueryHandler>()
+            .AddHandler<SomeCommandHandler>();
 
         var mediator = this.GetMediator();
         var query1 = new QueryClassOne("res1");
@@ -99,6 +117,32 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         Assert.Equal("res1", res1);
         Assert.Equal("res2", res2);
         Assert.Equal("rabbles", res3);
+    }
+
+
+    [Fact]
+    public void AddHandlers_Can_Register_Types_From_Assembly()
+    {
+        this.Services.AddHandlers(this.GetType().Assembly);
+
+        this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers);
+    }
+
+    [Fact]
+    public void AddHandlers_Can_Register_Filtered_List_Of_Types_From_Assembly()
+    {
+        this.Services.AddHandlers(t => t.Name.StartsWith("Query"), this.GetType().Assembly);
+
+        this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers.Where(t => t.Name.StartsWith("Query")));
+        this.Services.Select(s => s.ImplementationType).Should().NotContain(this.listOfHandlers.Where(t => !t.Name.StartsWith("Query")));
+    }
+
+    [Fact]
+    public void AddMediator_Can_Register_Types_From_Assembly()
+    {
+        this.Services.AddMediator(this.GetType().Assembly);
+
+        this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers);
     }
 
     private record struct QueryRecordStructOne(string Result) : IQuery<string>;
