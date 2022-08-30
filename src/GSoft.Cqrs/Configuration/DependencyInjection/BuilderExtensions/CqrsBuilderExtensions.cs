@@ -156,6 +156,7 @@ public static class CqrsBuilderExtensions
             var registration = Activator.CreateInstance(registrationType, request, genericWrapperType)!;
 
             services.AddSingleton(registrationType, registration);
+
         }
 
         return services;
