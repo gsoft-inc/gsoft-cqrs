@@ -1,9 +1,5 @@
-using System.Diagnostics.CodeAnalysis;
-using System.Reflection;
-using FakeItEasy;
-using GSoft.Cqrs.Abstractions.Events;
-using Microsoft.Extensions.DependencyInjection;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
 
 using Xunit;
 
@@ -118,7 +114,6 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         Assert.Equal("res2", res2);
         Assert.Equal("rabbles", res3);
     }
-
 
     [Fact]
     public void AddHandlers_Can_Register_Types_From_Assembly()
