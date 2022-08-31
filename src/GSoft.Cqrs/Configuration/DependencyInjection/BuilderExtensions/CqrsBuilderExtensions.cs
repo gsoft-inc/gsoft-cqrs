@@ -43,6 +43,7 @@ public static class CqrsBuilderExtensions
         var typesToRegister =
             from assembly in assembliesToScan
             from type in assembly.GetTypes()
+            where !type.IsAbstract
             where typeFilter(type)
             where type.GetInterfaces().Any(i => i.IsGenericType && supportedHandlers.Contains(i.GetGenericTypeDefinition()))
             select type;
