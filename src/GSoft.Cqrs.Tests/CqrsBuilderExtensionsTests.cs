@@ -140,6 +140,30 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         this.Services.Select(s => s.ImplementationType).Should().Contain(this.listOfHandlers);
     }
 
+    [Fact]
+    public void AddMediator_Can_Not_Register_Abstract_Types_From_Assembly()
+    {
+        this.Services.AddMediator(this.GetType().Assembly);
+
+        this.Services
+            .Select(s => s.ImplementationType)
+            .Should().Contain(typeof(SomeConcreteHandler))
+            .And.NotContain(typeof(SomeAbstractHandler))
+            .And.NotContain(typeof(ChildlessAbstractHandler));
+    }
+
+    [Fact]
+    public void AddHandlers_Can_Not_Register_Abstract_Types_From_Assembly()
+    {
+        this.Services.AddHandlers(this.GetType().Assembly);
+
+        this.Services
+            .Select(s => s.ImplementationType)
+            .Should().Contain(typeof(SomeConcreteHandler))
+            .And.NotContain(typeof(SomeAbstractHandler))
+            .And.NotContain(typeof(ChildlessAbstractHandler));
+    }
+
     private record struct QueryRecordStructOne(string Result) : IQuery<string>;
 
     private record struct SpyQuery(string Result) : IQuery<string>, IStreamQuery<char>;
@@ -244,6 +268,66 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
         public Task HandleAsync(SomeCommand command, CancellationToken cancellationToken)
         {
             return Task.CompletedTask;
+        }
+    }
+
+    private record SomeQuery : IQuery<SomeResponse>;
+
+    private record SomeResponse(int Result);
+
+    private record AnotherCommand : ICommand;
+
+    private record SomeStreamQuery : IStreamQuery<SomeResponse>;
+
+    private interface ISomeDependency
+    {
+        Task<int> GetMagicalNumberAsync() => Task.FromResult(2);
+    }
+
+    private record GetChildlessQuery : IQuery<string>;
+
+    private abstract class ChildlessAbstractHandler : IQueryHandler<GetChildlessQuery, string>
+    {
+        public Task<string> HandleAsync(GetChildlessQuery query, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(string.Empty);
+        }
+    }
+
+    private abstract class SomeAbstractHandler :
+        IQueryHandler<SomeQuery, SomeResponse>,
+        ICommandHandler<AnotherCommand>,
+        IStreamHandler<SomeStreamQuery, SomeResponse>
+    {
+        private readonly ISomeDependency _someDependency;
+
+        protected SomeAbstractHandler(ISomeDependency someDependency)
+        {
+            this._someDependency = someDependency;
+        }
+
+        public async Task<SomeResponse> HandleAsync(SomeQuery query, CancellationToken cancellationToken)
+        {
+            var magicalNumber = await this._someDependency.GetMagicalNumberAsync();
+
+            return new SomeResponse(magicalNumber);
+        }
+
+        public Task HandleAsync(AnotherCommand command, CancellationToken cancellationToken) => Task.CompletedTask;
+
+        public IAsyncEnumerable<SomeResponse> StreamAsync(SomeStreamQuery query, CancellationToken cancellationToken)
+        {
+            return Enumerable.Range(1, 3)
+                .Select(i => new SomeResponse(i))
+                .ToAsyncEnumerable();
+        }
+    }
+
+    private sealed class SomeConcreteHandler : SomeAbstractHandler
+    {
+        public SomeConcreteHandler(ISomeDependency someDependency)
+            : base(someDependency)
+        {
         }
     }
 }
