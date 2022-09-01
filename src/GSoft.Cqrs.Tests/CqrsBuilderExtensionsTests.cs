@@ -83,7 +83,7 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
     [Fact]
     public async Task AddHandler_Query_Can_Have_Parameters_Injected()
     {
-        this.Services.AddHandler<QueryHandlerWithInjection>(p => ActivatorUtilities.CreateInstance<QueryHandlerWithInjection>(p, "Test"));
+        this.Services.AddHandler(p => ActivatorUtilities.CreateInstance<QueryHandlerWithInjection>(p, "Test"));
         var mediator = this.GetMediator();
         var query = new QueryRecordTwo("Result");
 
@@ -279,6 +279,7 @@ public class CqrsBuilderExtensionsTests : BaseServiceCollectionTest
 
     private record SomeStreamQuery : IStreamQuery<SomeResponse>;
 
+    [System.Diagnostics.CodeAnalysis.SuppressMessage("StyleCop.CSharp.OrderingRules", "SA1201:Elements should appear in the correct order", Justification = "Test class")]
     private interface ISomeDependency
     {
         Task<int> GetMagicalNumberAsync() => Task.FromResult(2);
